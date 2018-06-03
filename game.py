@@ -2,17 +2,14 @@
 This is the main handler for the game.
 '''
 
-from board import Board
+from board import GameBoard
 from itertools import cycle
 import sys
 
 class Game:
     
     def __init__(self):
-        self.board = Board()
-        self.turn = cycle(self.board.PLAYERS)
-        self.player = next(self.turn)
-        self.moves = 0
+        self.board = GameBoard()
         self.verbose = False
         self.winner_count = dict.fromkeys(self.board.PLAYERS + [None], 0)
 
@@ -20,15 +17,13 @@ class Game:
         if not self.board.validate_move(col):
             raise Exception("Invalid move")
 
-        self.board.place_token(col, self.player)
-        self.player = next(self.turn)
-        self.moves += 1
+        self.board.place_token(col)
 
     def play(self):
         # for human v human play
         while not self.game_over():
             print(self.board)
-            print(f"It's {self.player}'s turn. Where would you like to go?\n")
+            print(f"It's {self.board.current_player_str}'s turn. Where would you like to go?\n")
             val = input()
             try:
                 col = int(val)-1
@@ -36,7 +31,7 @@ class Game:
             except:
                 print("Not a valid input\0")
                 continue
-        self.winner_count[self.winner()] += 1
+        self.winner_count[self.winner] += 1
 
     def play_random_game(self, times = 1):
         for _ in range(times):
@@ -46,11 +41,10 @@ class Game:
                 self.make_move(move)
             if self.verbose:
                 self.print_winning_dialog()
-            self.winner_count[self.winner()] += 1
+            self.winner_count[self.winner] += 1
 
     def reset_game(self):
         self.board.clear()
-        self.moves = 0
 
     def game_over(self):
         return self.board.game_over()
@@ -75,11 +69,17 @@ class Game:
         print("=" * self.board.cols)
         print(self.board)
         print("=" * self.board.cols)
-        winner = self.winner()
+        winner = self.winner
         if winner:
-            print(f"{winner} has won in {self.moves} moves!")
+            print(f"{self.board.PLAYER_DISPLAY[winner]} has won in {self.board.total_moves} moves!")
         else:
-            print(f"Game ended in a tie after {self.moves} moves")
+            print(f"Game ended in a tie after {self.board.total_moves} moves")
+
+class GameState:
+
+    def __init__(self, game_board, player):
+        self.state = game_board.board
+        self.player = game_board.next_player
 
 
 if __name__ == "__main__":

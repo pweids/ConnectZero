@@ -1,23 +1,43 @@
 import random
+import numpy as np
 
-class Board:
+class GameBoard:
     '''
     This class handles the game board and its validators/checkers
     '''
-    X = 'X'
-    O = 'O'
-    EMPTY = ' '
+    X = 1
+    O = -1
+    EMPTY = 0
     PLAYERS = [X, O]
+    PLAYER_DISPLAY = {
+        X: 'X',
+        O: 'O',
+        EMPTY: ' '}
 
     def __init__(self, rows = 6, cols = 7):
         self.rows = 6
         self.cols = 7
         self.clear()
 
-    def place_token(self, col, player):
+    @property
+    def current_player(self):
+        if self.count_tokens(self.X) > self.count_tokens(self.O):
+            return self.O
+        else:
+            return self.X
+
+    @property
+    def current_player_str(self):
+        return self.PLAYER_DISPLAY[self.current_player]
+
+    @property
+    def total_moves(self):
+        return self.count_tokens(self.X) + self.count_tokens(self.O)
+
+    def place_token(self, col):
         for row in reversed(self.board):
             if row[col] == self.EMPTY:
-                row[col] = player
+                row[col] = self.current_player
                 return
 
     def validate_move(self, col):
@@ -40,6 +60,13 @@ class Board:
 
     def get_random_move(self):
         return random.choice(self.get_legal_moves())
+
+    def count_tokens(self, player):
+        d = {self.X: 0, self.O: 0, self.EMPTY:0}
+        for row in self.board:
+            for cell in row:
+                d[cell] += 1
+        return d[player]
 
     def has_won(self, player):
         # has somebody won?
@@ -98,7 +125,7 @@ class Board:
         return False
 
     def clear(self):
-        self.board = [[self.EMPTY]*self.cols for _ in range(self.rows)]
+        self.board = np.zeros((self.rows, self.cols))
 
     def board_to_int(self):
         board = 0
@@ -133,7 +160,7 @@ class Board:
         outstr = ''
         for row in self.board:
             for col in row:
-                outstr += '[' + col + ']'
+                outstr += '[' + self.PLAYER_DISPLAY[col] + ']'
             outstr += '\n'
         for i in range(self.cols):
             outstr += f' {i+1} ' 
