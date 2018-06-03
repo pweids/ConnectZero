@@ -55,6 +55,7 @@ class Game:
     def game_over(self):
         return self.board.game_over()
 
+    @property
     def winner(self):
         if not self.game_over():
             return None
