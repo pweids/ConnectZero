@@ -12,7 +12,7 @@ class Board:
     def __init__(self, rows = 6, cols = 7):
         self.rows = 6
         self.cols = 7
-        self.clear_board()
+        self.clear()
 
     def place_token(self, col, player):
         for row in reversed(self.board):
@@ -97,7 +97,7 @@ class Board:
                 ): return True
         return False
 
-    def clear_board(self):
+    def clear(self):
         self.board = [[self.EMPTY]*self.cols for _ in range(self.rows)]
 
     def __str__(self):
