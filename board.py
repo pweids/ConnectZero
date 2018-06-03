@@ -100,6 +100,35 @@ class Board:
     def clear(self):
         self.board = [[self.EMPTY]*self.cols for _ in range(self.rows)]
 
+    def board_to_int(self):
+        board = 0
+        for i, row in enumerate(self.board):
+            for j, cell in enumerate(row):
+                index = i*14 + j*2
+                if cell == self.X:
+                    board |= 1 << index
+                elif cell == self.O:
+                    board |= 3 << index
+        return board
+
+    def int_to_board(self, bin_board):
+        row = []
+        board = []
+        for i in range(self.rows):
+            for j in range(self.cols):
+                index = i*14 + j*2
+                checkval = ((3 << index) & bin_board) >> index
+                if checkval == 1:
+                    row.append(self.X)
+                elif checkval == 3:
+                    row.append(self.O)
+                else:
+                    row.append(self.EMPTY)
+            board.append(row)
+            row = []
+        return board
+
+
     def __str__(self):
         outstr = ''
         for row in self.board:
