@@ -1,16 +1,22 @@
+import random
+
 class Board:
     '''
     This class handles the game board and its validators/checkers
     '''
+    X = 'X'
+    O = 'O'
+    EMPTY = ' '
+    PLAYERS = [X, O]
+
     def __init__(self, rows = 6, cols = 7):
         self.rows = 6
         self.cols = 7
-        self.board = [['']*cols for _ in range(rows)]
-
+        self.clear_board()
 
     def place_token(self, col, player):
         for row in reversed(self.board):
-            if row[col] == '':
+            if row[col] == self.EMPTY:
                 row[col] = player
                 return
 
@@ -19,18 +25,21 @@ class Board:
         if col not in range(self.cols):
             return False
         for row in self.board:
-            if row[col] == '':
+            if row[col] == self.EMPTY:
                 return True
         return False
 
     def get_legal_moves(self):
         # todo: change to bitarray
         # each bit is valid or not
-        legal = 0
+        legal = []
         for col in range(self.cols):
             if self.validate_move(col):
-                legal |= 1 << (self.cols-col-1)
+                legal.append(col)
         return legal
+
+    def get_random_move(self):
+        return random.choice(self.get_legal_moves())
 
     def has_won(self, player):
         # has somebody won?
@@ -38,15 +47,15 @@ class Board:
             self.check_fwd_diags(player) or self.check_back_diags(player))
 
     def get_winner(self):
-        if self.has_won('X'):
-            return 'X'
-        elif self.has_won('O'):
-            return 'O'
+        if self.has_won(self.X):
+            return self.X
+        elif self.has_won(self.O):
+            return self.O
         else:
             return None
 
-    def has_winner(self):
-        return self.get_winner() != None
+    def game_over(self):
+        return not self.get_legal_moves() or self.get_winner() != None
 
     def check_cols(self, player):
         for i in range(self.rows-3):
@@ -88,11 +97,14 @@ class Board:
                 ): return True
         return False
 
+    def clear_board(self):
+        self.board = [[self.EMPTY]*self.cols for _ in range(self.rows)]
+
     def __str__(self):
         outstr = ''
         for row in self.board:
             for col in row:
-                outstr += '[' + col.ljust(1) + ']'
+                outstr += '[' + col + ']'
             outstr += '\n'
         for i in range(self.cols):
             outstr += f' {i+1} ' 

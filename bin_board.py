@@ -3,6 +3,9 @@ import random
 class Board:
     '''
     This class handles the game board and its validators/checkers
+    It uses a binary representation for the board. But ultimately, did not see any speedup
+    because array lookup is 1 op and get_player_at is 6 ops, which is the bottleneck.
+    String comparison vs int comparison is negligible
     '''
     X = 1
     O = 3

@@ -3,16 +3,27 @@ This is the main handler for the game.
 '''
 
 from board import Board
+from itertools import cycle
+
+def play_random_game(board):
+    board.clear_board()
+    turn = cycle([board.X, board.O])
+    count = 0      
+    while (not board.game_over()):
+        player = next(turn)
+        move = board.get_random_move()
+        board.place_token(move, player)
+        count += 1
+
 
 if __name__ == "__main__":
     board = Board()
-    turn = 0
+    turn = cycle(board.PLAYERS)
 
     print("Welcome to the game!\n")
-    player = 'X'
 
-    while not board.has_winner():
-        player = 'X' if turn % 2 is 0 else 'O'
+    while not board.game_over():
+        player = next(turn)
         print(board)
         val = input(f"It's {player}'s turn. Where would you like to go?\n")
         try:
@@ -24,9 +35,12 @@ if __name__ == "__main__":
             print("Not a valid input\0")
             continue
         board.place_token(col, player)
-        turn += 1
 
     print("=" * board.cols)
     print(board)
     print("=" * board.cols)
-    print(f"{board.get_winner()} has won!")
+    winner = board.get_winner()
+    if winner:
+        print(f"{board.get_winner()} has won!")
+    else:
+        print("Game ended in a tie")
