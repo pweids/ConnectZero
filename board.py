@@ -35,31 +35,24 @@ class GameBoard:
         return self.count_tokens(self.X) + self.count_tokens(self.O)
 
     def place_token(self, col):
-        for row in reversed(self.board):
-            if row[col] == self.EMPTY:
-                row[col] = self.current_player
-                return
+        row, = np.where(self.board[:,col] == 0)
+        self.board[row[-1]][col] = self.current_player
 
     def validate_move(self, col):
         # is this a legal move?
         if col not in range(self.cols):
             return False
-        for row in self.board:
-            if row[col] == self.EMPTY:
-                return True
-        return False
+        return self.get_legal_moves()[col]
 
     def get_legal_moves(self):
-        # todo: change to bitarray
-        # each bit is valid or not
-        legal = []
-        for col in range(self.cols):
-            if self.validate_move(col):
-                legal.append(col)
-        return legal
+        return self.board[0] == self.EMPTY
 
     def get_random_move(self):
-        return random.choice(self.get_legal_moves())
+        moves = self.get_legal_moves()
+        i = np.random.randint(self.cols)
+        while (not moves[i]):
+            i = np.random.randint(self.cols)
+        return i
 
     def count_tokens(self, player):
         d = {self.X: 0, self.O: 0, self.EMPTY:0}
@@ -82,7 +75,7 @@ class GameBoard:
             return None
 
     def game_over(self):
-        return not self.get_legal_moves() or self.get_winner() != None
+        return not np.count_nonzero(self.get_legal_moves()) or self.get_winner() != None
 
     def check_cols(self, player):
         for i in range(self.rows-3):

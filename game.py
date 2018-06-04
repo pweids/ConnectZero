@@ -79,7 +79,7 @@ class GameState:
 
     def __init__(self, game_board, player):
         self.state = game_board.board
-        self.player = game_board.next_player
+        self.player = game_board.current_player
 
 
 if __name__ == "__main__":
