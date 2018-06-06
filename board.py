@@ -42,17 +42,17 @@ class GameBoard:
         # is this a legal move?
         if col not in range(self.cols):
             return False
-        return self.get_legal_moves()[col]
+        return col in self.get_legal_moves()
 
     def get_legal_moves(self):
-        return self.board[0] == self.EMPTY
+        return np.where(self.board[0] == self.EMPTY)[0]
 
     def get_random_move(self):
         moves = self.get_legal_moves()
-        i = np.random.randint(self.cols)
-        while (not moves[i]):
-            i = np.random.randint(self.cols)
-        return i
+        if len(moves) == 0:
+            return 0
+        else:
+            return np.random.choice(moves)
 
     def count_tokens(self, player):
         d = {self.X: 0, self.O: 0, self.EMPTY:0}
@@ -118,7 +118,7 @@ class GameBoard:
         return False
 
     def clear(self):
-        self.board = np.zeros((self.rows, self.cols))
+        self.board = np.zeros((self.rows, self.cols), dtype=np.int8)
 
     def board_to_int(self):
         board = 0
