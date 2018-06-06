@@ -1,7 +1,3 @@
-'''
-This is the main handler for the game.
-'''
-
 from board import GameBoard
 from itertools import cycle
 import sys
@@ -19,8 +15,8 @@ class Game:
 
         self.board.place_token(col)
 
-    def play(self):
-        # for human v human play
+    def play_hvh(self):
+        """for human v human play """
         while not self.game_over():
             print(self.board)
             print(f"It's {self.board.current_player_str}'s turn. Where would you like to go?\n")
@@ -32,6 +28,10 @@ class Game:
                 print("Not a valid input\0")
                 continue
         self.winner_count[self.winner] += 1
+    
+    def play_AIvAI(self, player1, player2):
+        """Make 2 neural nets play each other"""
+        pass
 
     def play_random_game(self, times = 1):
         for _ in range(times):

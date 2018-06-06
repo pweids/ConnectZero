@@ -187,5 +187,5 @@ class GameBoard:
                 outstr += '[' + self.PLAYER_DISPLAY[col] + ']'
             outstr += '\n'
         for i in range(self.cols):
-            outstr += f' {i+1} ' 
+            outstr += f" {i+1} "
         return outstr

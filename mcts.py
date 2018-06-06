@@ -5,7 +5,7 @@ import numpy as np
 
 class MCTS:
     
-    def __init__(self, nnet, c=1.0):
+    def __init__(self, c=1.0):
         self.nnet = nnet
         self.c = c # level of exploration. Higher for self-play
         
@@ -19,7 +19,7 @@ class MCTS:
         self.Visited = set()
 
 
-    def search(self, state):
+    def search(self, state, nnet):
         # Terminal condition
         if state.game_over(): 
             return -1
@@ -27,7 +27,7 @@ class MCTS:
         # Not explored condition
         # Use the neural net to predict P(s,*) and V(s)
         if state not in self.Visited:
-            P, v = self.nnet.predict(state)
+            P, v = nnet.predict(state)
             self.Update_Psa(state, P)
             self.Visited.add(state)
             return -v
@@ -43,7 +43,7 @@ class MCTS:
         next_state.place_token(chosen_action)
 
         # 3. Recursively get the value of the chosen move
-        v = self.search(next_state)
+        v = self.search(next_state, nnet)
         print(f"Placing in column {chosen_action+1}")
 
         # 4. Update the edge values to backprop
@@ -66,8 +66,7 @@ class MCTS:
 
 
     def Update_Psa(self, state, P):
-        """ get all of the moves and update the Psa dict
-        """
+        """get all of the moves and update the Psa dict """
         moves = state.get_legal_moves()
         for move in moves:
             self.Psa[(state, move)] = P[move]
