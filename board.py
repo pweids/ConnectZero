@@ -148,6 +148,11 @@ class GameBoard:
             row = []
         return board
 
+    def __eq__(self, other):
+        return np.all(self.board == other.board)
+
+    def __hash__(self):
+        return hash(np.array_str(self.board))
 
     def __str__(self):
         outstr = ''
