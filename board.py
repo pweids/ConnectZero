@@ -19,6 +19,7 @@ class GameBoard:
         self.cols = 7
         self.clear()
 
+
     @property
     def current_player(self):
         if self.count_tokens(self.X) > self.count_tokens(self.O):
@@ -26,33 +27,43 @@ class GameBoard:
         else:
             return self.X
 
+
     @property
     def current_player_str(self):
         return self.PLAYER_DISPLAY[self.current_player]
+
 
     @property
     def total_moves(self):
         return self.count_tokens(self.X) + self.count_tokens(self.O)
 
+
     def place_token(self, col):
+        """Current player makes a move in column index col """
         row, = np.where(self.board[:,col] == 0)
         self.board[row[-1]][col] = self.current_player
 
+
     def validate_move(self, col):
-        # is this a legal move?
+        """Returns True if column is a legal move """
         if col not in range(self.cols):
             return False
-        return col in self.get_legal_moves()
+        return self.board[0][col] == 0
+
 
     def get_legal_moves(self):
+        """Returns a list of valid column moves """
         return np.where(self.board[0] == self.EMPTY)[0]
 
+
     def get_random_move(self):
+        """Returns a random move or None if there aren't any """
         moves = self.get_legal_moves()
         if len(moves) == 0:
-            return 0
+            return None
         else:
             return np.random.choice(moves)
+
 
     def count_tokens(self, player):
         d = {self.X: 0, self.O: 0, self.EMPTY:0}
@@ -61,12 +72,9 @@ class GameBoard:
                 d[cell] += 1
         return d[player]
 
-    def has_won(self, player):
-        # has somebody won?
-        return (self.check_cols(player) or self.check_rows(player) or 
-            self.check_fwd_diags(player) or self.check_back_diags(player))
 
     def get_winner(self):
+        """Get the player who has won, or None if not over/tie """
         if self.has_won(self.X):
             return self.X
         elif self.has_won(self.O):
@@ -74,18 +82,16 @@ class GameBoard:
         else:
             return None
 
-    def get_win_value(self):
-        winner = state.get_winner()
-        if winner is None:
-            return 0
-        player = state.current_player
-        if winner is player:
-            return -1 #because the current player is the next player/loser
-        else:
-            return 1
 
     def game_over(self):
+        """Return true if the game is over """
         return not np.count_nonzero(self.get_legal_moves()) or self.get_winner() != None
+
+
+    def clear(self):
+        """Clear the board to reset the game """
+        self.board = np.zeros((self.rows, self.cols), dtype=np.int8)
+
 
     def check_cols(self, player):
         for i in range(self.rows-3):
@@ -96,7 +102,8 @@ class GameBoard:
                     player
                 ): return True
         return False
-            
+
+
     def check_rows(self, player):
         for i in range(self.rows):
             for j in range(self.cols-3):
@@ -106,6 +113,7 @@ class GameBoard:
                     player
                 ): return True
         return False
+
 
     def check_back_diags(self, player): # like this \
         for i in range(self.rows-3):
@@ -117,6 +125,7 @@ class GameBoard:
                 ): return True
         return False
 
+
     def check_fwd_diags(self, player): # like this /
         for i in range(self.rows-3):
             for j in range(self.cols-3):
@@ -127,8 +136,11 @@ class GameBoard:
                 ): return True
         return False
 
-    def clear(self):
-        self.board = np.zeros((self.rows, self.cols), dtype=np.int8)
+
+    def has_won(self, player):
+        return (self.check_cols(player) or self.check_rows(player) or 
+            self.check_fwd_diags(player) or self.check_back_diags(player))
+
 
     def board_to_int(self):
         board = 0
@@ -140,6 +152,7 @@ class GameBoard:
                 elif cell == self.O:
                     board |= 3 << index
         return board
+
 
     def int_to_board(self, bin_board):
         row = []
@@ -158,11 +171,14 @@ class GameBoard:
             row = []
         return board
 
+
     def __eq__(self, other):
         return np.all(self.board == other.board)
 
+
     def __hash__(self):
         return hash(np.array_str(self.board))
+
 
     def __str__(self):
         outstr = ''
