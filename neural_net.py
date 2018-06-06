@@ -1,38 +1,19 @@
 import numpy as np
 import math
 
-class Neuron:
+class RandomNeuralNet:
 
-    def __init__(self, inputs = [], outputs = []):
-        self.value = 0
-        self.input_synapses = inputs
-        self.output_synapses = outputs
+    def predict(self, state):
+        np.random.seed(state.board.flatten())
+        pi = np.random.randn(len(state.board[0]))
+        pi = self.softmax(pi)
 
-    def forward(self):
-        if self.input_synapses:
-            self.sum_inputs()
-        if self.output_synapses:
-            for synapse in self.output_synapses:
-                synapse.fire(self.value)
+        v = np.random.uniform(-1,1)
+        return (pi, v)
 
-    def sum_inputs(self):
-        self.value = self.sigmoid(sum(self.input_synapses))
-
-    def sigmoid(self, x):
-        return 1 / (1 + math.exp(-x))
-
-
-class Synapse:
-
-    def __init__(self):
-        self.weight = np.random.rand()*2 - 1
-        self.value = 0
-
-    def fire(self, in_val):
-        self.value = self.weight * in_val
-
-    def __add__(self, other):
-        return self.value + other.value
+    def softmax(self, p):
+        e_p = np.exp(p - np.max(p))
+        return e_p / e_p.sum(axis=0)
 
 class NeuralNet:
 

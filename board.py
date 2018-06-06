@@ -74,6 +74,16 @@ class GameBoard:
         else:
             return None
 
+    def get_win_value(self):
+        winner = state.get_winner()
+        if winner is None:
+            return 0
+        player = state.current_player
+        if winner is player:
+            return -1 #because the current player is the next player/loser
+        else:
+            return 1
+
     def game_over(self):
         return not np.count_nonzero(self.get_legal_moves()) or self.get_winner() != None
 

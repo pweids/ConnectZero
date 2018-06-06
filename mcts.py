@@ -34,12 +34,18 @@ class MCTS:
         self.Wsa = ddict(float) # total action value
         self.Qsa = ddict(float) # mean action value
         self.Psa = ddict(float) # prior probability
+        self.Visited = set()    # the states we've seen
 
     def search(self, state):
+        if state.game_over(): return state.get_win_value()
+
+        moves = state.get_legal_moves()
+        best_edge = np.argmax(U(state, move) for move in moves)
         pass
 
     def U(self, edge):
         state = edge[0]
         possible_moves = state.get_legal_moves()
         sum_nsb = sum([self.Nsa[(state, move)] for move in possible_moves])
-        return self.c * self.Psa[edge] * (sum_nsb/(1 + self.Nsa[edge]))
+        explore_factor = self.c * self.Psa[edge] * (np.sqrt(sum_nsb)/(1 + self.Nsa[edge]))
+        return self.Qsa(edge) + explore_factor
