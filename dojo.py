@@ -1,11 +1,13 @@
 from board import GameBoard
 from mcts import MCTS
 import neural_net
+
 import numpy as np
-from copy import deepcopy
-import time
-from collections import defaultdict
 from progress.bar import Bar
+
+from copy import deepcopy
+import time, logging
+from collections import defaultdict
 
 class Dojo:
     """This class will train our neural network through self-play """

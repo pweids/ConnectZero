@@ -1,7 +1,7 @@
 import copy
 from collections import defaultdict as ddict
 import numpy as np
-
+import logging
 
 class MCTS:
     
@@ -85,12 +85,13 @@ class MCTS:
         return prob
 
 
-    def pi_vec(self, state, temp=1.):
+    def pi_vec(self, state):
+        temp = 1 / (state.total_moves + 1) # the temperature gets lower as we get further in the game
         pi = []
         moves = state.get_legal_moves()
-        total_visits = np.sum([self.Nsa[(state, move)]**(1/temp) for move in moves])
+        total_visits = np.sum([self.Nsa[(state, move)] for move in moves])
         if total_visits == 0:
             return np.ones(state.cols) / state.cols # give them equal probabilities
         for action in range(state.cols):
             edge = (state, action)
-            pi.append(self.Nsa[edge]**(1/temp) / total_visits)
+            pi.append((self.Nsa[edge] / total_visits)**(1/temp))
