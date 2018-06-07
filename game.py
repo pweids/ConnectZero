@@ -43,6 +43,15 @@ class Game:
                 self.print_winning_dialog()
             self.winner_count[self.winner] += 1
 
+
+    def make_random_moves(self, moves):
+        for _ in range(moves):
+            if self.game_over():
+                break
+            move = self.board.get_random_move()
+            self.make_move(move)
+            
+
     def reset_game(self):
         self.board.clear()
 

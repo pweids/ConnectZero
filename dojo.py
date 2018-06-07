@@ -4,6 +4,7 @@ import neural_net
 import numpy as np
 from copy import deepcopy
 import time
+from collections import defaultdict
 from progress.bar import Bar
 
 class Dojo:
@@ -40,11 +41,15 @@ class Dojo:
         """ This function will n games and store
         the results into the batch variable for training
         """
-        for _ in Bar('Game').iter(range(n)):
-            self.simulate_game()
+        winners = defaultdict(int)
+        for _ in Bar('Game', suffix="%(index)d/%(max)d - %(elapsed)ds [%(eta)ds remain]").iter(range(n)):
+            winner = self.simulate_game()
+            winners[winner] += 1
 
+        for p in winners:
+            print(f'{p} has won {winners[p]} times ({winners[p] / n})')
     
-    def simulate_game(self, max_turn_time=1):
+    def simulate_game(self, max_turn_time=.5):
         """Simulate a game played by the NeuralNet using the MCTS.
         The tree will stop searching for a turn after max_turn_time (seconds)
         """
@@ -54,11 +59,14 @@ class Dojo:
             start_turn = time.time()
             while (time.time() - start_turn) < max_turn_time:
                 self.tree.search(self.board, self.nnet)
+            
             pv = self.tree.prob_vec(self.board)
             choose = np.random.choice(len(pv), p=pv)
             self.board.place_token(choose)
             self.batch.append([deepcopy(self.board), self.tree.pi_vec(self.board), None])
+
         self.add_to_results()
+        return self.board.get_winner()
         
 
     def add_to_results(self):

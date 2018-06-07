@@ -1,7 +1,6 @@
 import copy
 from collections import defaultdict as ddict
 import numpy as np
-import IPython
 
 
 class MCTS:
