@@ -5,38 +5,52 @@ import neural_net
 import numpy as np
 from progress.bar import Bar
 
+import time, logging, pickle, os
 from copy import deepcopy
-import time, logging
+from itertools import cycle
 from collections import defaultdict
 
 class Dojo:
     """This class will train our neural network through self-play """
 
-    def __init__(self, board=None, nnet=None, mcts=None):
+    def __init__(self, board=None, nnet=None, mcts=None, batch_size=10):
         """Pass the baord class (defaults to GameBoard), the neural net instance
         and the MCTS instance
         """
+        logging.basicConfig(filename="dojo.log", level=logging.DEBUG,
+            filemode='w')
+
         self.board = board or GameBoard()
         self.nnet = nnet or neural_net.RandomNeuralNet()
         self.tree = mcts or MCTS(3)
 
-        self.batch = []
+        self.training_examples = []
+        self.batch_size = batch_size
 
 
-    def training_session(self, n=10, rounds=100):
+    def training_session(self, n=100, rounds=1000):
         """ The neural nets will play the number rounds with
         n games each. The nnets will be trained after every round.
         If the newly trained nnet wins greater than 55% of the time,
         it becomes our new nnet
         """
+        start = time.time()
+        logging.info(f"==Epoch started <{rounds} rounds of {n}==\n")
+        
         for round in Bar('Epoch').iter(range(rounds)):
-            play_games(n)
-            # train the nnet
-            # clear the batch
-            # simulate 1000 games
-            # if > 0.55 win rate, replace nnet
-            # store the nnet and tree
-        pass
+            round_start = time.time()
+            logging.info(f" =Round {round} started= \n")
+            self.play_games(n)
+            self.train() # train the nnet
+            oldnnet = deepcopy(self.nnet)
+            win_pct = self.evaluate(self.nnet, oldnnet)
+            if win_pct >= 0.55:
+                self.nnet = oldnnet
+                logging.debug(f"Replacing neural net after {round+1} rounds")
+            self._save_checkpoint()
+            logging.info(f" =Round ended in {time.time()-round_start}s= \n")
+        
+        logging.info(f"==Epoch ended in {time.time()-start:.1f}s==\n")
 
 
     def play_games(self, n=10):
@@ -49,14 +63,14 @@ class Dojo:
             winners[winner] += 1
 
         for p in winners:
-            print(f'{p} has won {winners[p]} times ({winners[p] / n})')
-    
+            logging.info(f'{p} has won {winners[p]} times ({winners[p] / n})')
+
+
     def simulate_game(self, max_turn_time=.5):
         """Simulate a game played by the NeuralNet using the MCTS.
         The tree will stop searching for a turn after max_turn_time (seconds)
         """
         self.board.clear()
-        start = time.time()
         while not self.board.game_over():
             start_turn = time.time()
             while (time.time() - start_turn) < max_turn_time:
@@ -64,20 +78,80 @@ class Dojo:
             
             pv = self.tree.prob_vec(self.board)
             choose = np.random.choice(len(pv), p=pv)
+            logging.debug(f"{self.board.PLAYER_DISPLAY[self.board.current_player]}" \
+                f" choosing move {choose+1} in board \n{self.board}\n")
             self.board.place_token(choose)
-            self.batch.append([deepcopy(self.board), self.tree.pi_vec(self.board), None])
+            self.training_examples.append([deepcopy(self.board), self.tree.pi_vec(self.board), None])
 
-        self.add_to_results()
+        self._add_to_results()
         return self.board.get_winner()
-        
+ 
+ 
+    def train(self):
+        batch = []
+        for example in self.training_examples:
+            batch.append(example)
+            if len(batch) >= self.batch_size:
+                self.nnet.train_batch(batch)
+                batch = []
 
-    def add_to_results(self):
+
+    def evaluate(self, net1, net2, num_games=50, max_turn_time=.2):
+        """This function will play two neural nets against
+        each other num_games times. It returs the ratio in
+        which the first player won
+        """
+        logging.info("== Starting evaluation round ==")
+        p1_wins = 0
+        for i in range(num_games):
+            game_start = time.time()
+            turn = self._get_turn_cycle((net1, MCTS()), (net2, MCTS()))
+            self.board.clear()
+            while not self.board.game_over():
+                start_turn = time.time()
+                player = next(turn)
+                while (time.time() - start_turn) < max_turn_time:
+                    player[1].search(self.board, player[0])
+                
+                pv = player[1].prob_vec(self.board)
+                choose = np.random.choice(len(pv), p=pv)
+                self.board.place_token(choose)
+            if self.board.get_winner() is net1:
+                p1_wins += 1
+                logging.info(f"player 1 wins game {i} ({p1_wins} total wins)")
+            else:
+                logging.info(f"player 2 wins game {i} ({i-p1_wins+1} total wins)")
+
+            logging.debug(f"game {i} took {time.time()-game_start:.1f}s, {self.board.total_moves} moves\n{self.board}")
+        return p1_wins/num_games
+
+
+    def _save_checkpoint(self):
+        logging.debug("saving checkpoint...")
+        with open("dnn_checkpoint.bin", 'wb+') as dnn_f:
+            pickle.dump(self.nnet, dnn_f)
+        
+        with open("tree_checkpoint.bin", 'wb+') as tree_f:
+            pickle.dump(self.tree, tree_f)
+
+
+    def _load_checkpoints(self):
+        if (os.path.isfile('dnn_checkpoint.bin')):
+            with open("dnn_checkpoint.bin") as dnn_f:
+                self.nnet = pickle.load(dnn_f)
+        
+        if (os.path.isfile('tree_checkpoint.bin')):
+            with open("tree_checkpoint.bin") as tree_f:
+                self.tree = pickle.load(tree_f)
+
+
+    def _add_to_results(self):
         """This function loops backwards through the samples that
         were just added to the batch. It will stop when it finds a
         sample that already has a results value
         """
         winner = self.board.get_winner()
-        for sample in reversed(self.batch):
+        for sample in reversed(self.training_examples):
             if sample[2] is not None:
                 break
             board = sample[0]
@@ -87,3 +161,9 @@ class Dojo:
                 sample[2] = 0
             else:
                 sample[2] = -1
+
+
+    def _get_turn_cycle(self, *args):
+        temp = list(args)
+        np.random.shuffle(temp)
+        return cycle(temp)

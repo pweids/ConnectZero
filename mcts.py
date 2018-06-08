@@ -89,9 +89,10 @@ class MCTS:
         temp = 1 / (state.total_moves + 1) # the temperature gets lower as we get further in the game
         pi = []
         moves = state.get_legal_moves()
-        total_visits = np.sum([self.Nsa[(state, move)] for move in moves])
+        total_visits = np.sum([self.Nsa[(state, move)] for move in moves]) ** (1./temp)
         if total_visits == 0:
             return np.ones(state.cols) / state.cols # give them equal probabilities
         for action in range(state.cols):
             edge = (state, action)
-            pi.append((self.Nsa[edge] / total_visits)**(1/temp))
+            pi.append(self.Nsa[edge]**(1./temp) / total_visits)
+        return np.array(pi)
