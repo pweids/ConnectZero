@@ -5,7 +5,7 @@ import neural_net
 import numpy as np
 from progress.bar import Bar
 
-import time, logging, pickle, os
+import time, logging
 from copy import deepcopy
 from itertools import cycle
 from collections import defaultdict
@@ -128,21 +128,13 @@ class Dojo:
 
     def _save_checkpoint(self):
         logging.debug("saving checkpoint...")
-        with open("dnn_checkpoint.bin", 'wb+') as dnn_f:
-            pickle.dump(self.nnet, dnn_f)
-        
-        with open("tree_checkpoint.bin", 'wb+') as tree_f:
-            pickle.dump(self.tree, tree_f)
+        self.tree.save_checkpoint()
+        self.nnet.save_checkpoint()
 
 
     def _load_checkpoints(self):
-        if (os.path.isfile('dnn_checkpoint.bin')):
-            with open("dnn_checkpoint.bin") as dnn_f:
-                self.nnet = pickle.load(dnn_f)
-        
-        if (os.path.isfile('tree_checkpoint.bin')):
-            with open("tree_checkpoint.bin") as tree_f:
-                self.tree = pickle.load(tree_f)
+        self.tree.load_checkpoint()
+        self.nnet.load_checkpoint()
 
 
     def _add_to_results(self):

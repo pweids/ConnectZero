@@ -1,7 +1,7 @@
-import copy
-from collections import defaultdict as ddict
 import numpy as np
-import logging
+
+from collections import defaultdict as ddict
+import logging, pickle, copy, os
 
 class MCTS:
     
@@ -96,3 +96,20 @@ class MCTS:
             edge = (state, action)
             pi.append(self.Nsa[edge]**(1./temp) / total_visits)
         return np.array(pi)
+
+
+    def save_checkpoint(self, file="tree_checkpoint.bin"):
+        """Save the tree to a checkpoint file for future loading """
+        with open(file, 'wb+') as tree_f:
+            pickle.dump(self, tree_f)
+
+
+    @staticmethod
+    def load_checkpoint(file="tree_checkpoint.bin"):
+        """Load the most recent checkpoint from file. If file does not exits,
+        it returns a new tree instead
+        """
+        if (os.path.isfile(file)):
+            with open(file, 'rb') as tree_f:
+                return pickle.load(tree_f)
+        return MCTS()

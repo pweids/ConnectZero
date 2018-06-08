@@ -2,7 +2,7 @@ import math
 import game
 
 import numpy as np
-import logging
+import logging, pickle, os
 
 class RandomNeuralNet:
 
@@ -89,7 +89,6 @@ class NeuralNet:
 
 
     def get_results(self):
-        output_vec = self.layers[-1]
         P = self.layers[-1].a[:-1]
         v = self.layers[-1].a[-1]
         return P, v
@@ -173,6 +172,19 @@ class NeuralNet:
         p = p / np.sum(p) # i found this helps when the values are really high
         e_p = np.exp(p - np.max(p))
         return e_p / e_p.sum(axis=0)
+
+
+    def save_checkpoint(self, file="dnn_checkpoint.bin"):
+        with open(file, 'wb+') as dnn_f:
+            pickle.dump(self, dnn_f)
+
+
+    @staticmethod
+    def load_checkpoint(file="dnn_checkpoint.bin"):
+        if (os.path.isfile(file)):
+            with open(file, 'rb') as dnn_f:
+                return pickle.load(dnn_f)
+        return NeuralNet()
 
 
 def test():

@@ -1,23 +1,22 @@
 from mcts import MCTS
+import neural_net as nn
 import numpy as np
 import time
 
 class AIPlayer:
     """This class will handle the move selection for an AI """
-    def __init__(self, nnet, mcts=None):
-        self.mcts = mcts or MCTS()
-        self.nnet = nnet
+    def __init__(self, nnet=None, mcts=None):
+        self.mcts = mcts or MCTS.load_checkpoint()
+        self.nnet = nnet or nn.NeuralNet.load_checkpoint()
 
 
-    def get_move(self, game):
-        board = game.board
+    def get_move(self, board):
         self.evaluate_moves(board)
-        pi = self.mcts.pi_vec(board)
-        # TODO
-        pass
+        pv = self.mcts.prob_vec(board)
+        return np.random.choice(len(pv), p=pv)
 
 
-    def evaluate_moves(self, state, max_iters=5000, timeout_time=0.5):
+    def evaluate_moves(self, state, max_iters=160, timeout_time=np.inf):
         start = time.time()
         for _ in range(max_iters):
             self.mcts.search(state, self.nnet)

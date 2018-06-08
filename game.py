@@ -1,4 +1,6 @@
 from board import GameBoard
+import aiplayer
+
 from itertools import cycle
 import sys
 
@@ -29,6 +31,27 @@ class Game:
                 continue
         self.winner_count[self.winner] += 1
     
+
+    def play_AIvH(self):
+        ai = aiplayer.AIPlayer()
+        player = True
+        while not self.game_over():
+            print(self.board)
+            if not player: #ai goes
+                print(f"It's the AI's [{self.board.current_player_str}] turn.\n")
+                move = ai.get_move(self.board)
+                self.make_move(move)
+            else:
+                print("It's your turn. Where would you like to go?\n")
+                val = input()
+                try:
+                    col = int(val)-1
+                    self.make_move(col)
+                except:
+                    print("Not a valid input\0")
+                    continue
+            player = not player
+
     def play_AIvAI(self, player1, player2):
         """Make 2 neural nets play each other"""
         pass
@@ -92,10 +115,9 @@ class GameState:
 
 
 if __name__ == "__main__":
-    
     game = Game()
     game.verbose = True
-    game.play_hvh()
+    game.play
     game.print_winning_dialog()
 
     
