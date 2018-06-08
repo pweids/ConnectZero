@@ -2,7 +2,7 @@ from board import GameBoard
 import aiplayer
 
 from itertools import cycle
-import sys
+import sys, random
 
 class Game:
     
@@ -32,7 +32,8 @@ class Game:
         self.winner_count[self.winner] += 1
     
 
-    def play_AIvH(self):
+    def play_AIvH(self, player):
+        print("Loading the AI")
         ai = aiplayer.AIPlayer()
         player = True
         while not self.game_over():
@@ -52,9 +53,19 @@ class Game:
                     continue
             player = not player
 
-    def play_AIvAI(self, player1, player2):
+    def play_AIvAI(self, ai1=None, ai2=None):
         """Make 2 neural nets play each other"""
-        pass
+        print("Loading the models...")
+        ai1 = ai1 or aiplayer.AIPlayer()
+        ai2 = ai2 or aiplayer.AIPlayer()
+        players = cycle([ai1, ai2])
+        while not self.game_over():
+            player = next(players)
+            print(self.board)
+            print(f"It's {self.board.current_player_str}'s turn.\n")
+            move = player.get_move(self.board)
+            self.make_move(move)
+
 
     def play_random_game(self, times = 1):
         for _ in range(times):
@@ -117,7 +128,7 @@ class GameState:
 if __name__ == "__main__":
     game = Game()
     game.verbose = True
-    game.play
+    game.play_AIvH(random.choice([True, False]))
     game.print_winning_dialog()
 
     

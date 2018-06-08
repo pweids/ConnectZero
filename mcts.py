@@ -23,7 +23,7 @@ class MCTS:
         # Terminal condition
         if state.game_over():
             self.Terminals.add(state)
-            return -1
+            return -1 # the "current player" will always be the loser, thus -1
 
         # Not explored condition
         # Use the neural net to predict P(s,*) and V(s)
@@ -46,11 +46,12 @@ class MCTS:
         
         # 4. Update the edge values to backprop
         self.Nsa[chosen_edge] += 1
-        self.Wsa[chosen_edge] += v
+        self.Wsa[chosen_edge] -= v
         self.Qsa[chosen_edge] = self.Wsa[chosen_edge] / self.Nsa[chosen_edge]
         
         # 5. Return -v because players switch
         return -v
+
 
     def U_vec(self, state):
         moves = state.get_legal_moves()
