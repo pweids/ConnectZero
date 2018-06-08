@@ -32,7 +32,12 @@ class Dojo:
         If the newly trained nnet wins greater than 55% of the time,
         it becomes our new nnet
         """
+        start = time.time()
+        logging.info(f"==Epoch started <{rounds} rounds of {n}==\n")
+        
         for round in Bar('Epoch').iter(range(rounds)):
+            round_start = time.time()
+            logging.info(f" =Round {round} started= \n")
             self.play_games(n)
             self.train() # train the nnet
             oldnnet = deepcopy(self.nnet)
@@ -41,7 +46,9 @@ class Dojo:
                 self.nnet = oldnnet
                 logging.debug(f"Replacing neural net after {round+1} rounds")
             self._save_checkpoint()
-        pass
+            loggin.info(f" =Round ended in {time.time()-round_start}s= \n")
+        
+        logging.info(f"==Epoch ended in {time.time()-start:.1f}s==\n")
 
 
     def play_games(self, n=10):
