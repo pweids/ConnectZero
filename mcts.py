@@ -94,3 +94,4 @@ class MCTS:
         for action in range(state.cols):
             edge = (state, action)
             pi.append(self.Nsa[edge]**(1/temp) / total_visits)
+        return np.array(pi)

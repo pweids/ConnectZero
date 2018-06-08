@@ -95,7 +95,7 @@ if __name__ == "__main__":
     
     game = Game()
     game.verbose = True
-    game.play()
+    game.play_hvh()
     game.print_winning_dialog()
 
     
