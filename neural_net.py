@@ -65,7 +65,7 @@ class NeuralNet:
         logging.basicConfig(filename="nn.log", level=logging.DEBUG, filemode='w')
 
 
-    def train(self, state, z, pi, verbose=False):
+    def train(self, state, pi, z):
         """Train this neural network with the current state
         and the actual values for the position value and 
         probablity array
@@ -77,7 +77,8 @@ class NeuralNet:
         
         self.predict(state)
         cost_end = self.cost_function(z, pi)
-        logging.debug(f"Loss change: {cost_start:.2f} - {cost_end:.2f}")
+        delta_cost = cost_start - cost_end
+        out = f"Loss change: {cost_start:.2f} - {cost_end:.2f} = {delta_cost:.2f}"
 
 
     def predict(self, state):
@@ -134,7 +135,8 @@ class NeuralNet:
         P, v = self.get_results()
         delta = []
         for pi_i, P_i in zip(pi, P):
-            delta.append(pi_i/P_i)
+            #p_i / P_i
+            delta.append(pi_i*(1-P_i))
         delta.append(2*(v-z))
         out_layer.delta = np.array(delta)
 

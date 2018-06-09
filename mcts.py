@@ -25,7 +25,6 @@ class MCTS:
         # Terminal condition
         if state.game_over():
             self.Terminals.add(state)
-            self.logging.info(f"Found terminal state:\n{state}")
             return -1 # the "current player" will always be the loser, thus -1
 
         # Not explored condition
@@ -101,7 +100,18 @@ class MCTS:
             pi.append(self.Nsa[edge]**(1./temp) / total_visits)
         return np.array(pi)
 
+    
+    def reset_tree(self):
+        """Resets the 
+        """
+        self.Nsa = ddict(int)       
+        self.Wsa = ddict(float)     
+        self.Qsa = ddict(float)     
+        self.Psa = ddict(float)     
 
+        self.Visited = set()
+        self.Terminals = set()
+    
     def save_checkpoint(self, file="tree_checkpoint.bin"):
         """Save the tree to a checkpoint file for future loading """
         with open(file, 'wb+') as tree_f:
