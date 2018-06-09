@@ -18,11 +18,14 @@ class MCTS:
         self.Visited = set()
         self.Terminals = set()
 
+        logging.basicConfig(filename="mcts.log", level=logging.DEBUG, filemode='w')
+
 
     def search(self, state, nnet):
         # Terminal condition
         if state.game_over():
             self.Terminals.add(state)
+            self.logging.info(f"Found terminal state:\n{state}")
             return -1 # the "current player" will always be the loser, thus -1
 
         # Not explored condition

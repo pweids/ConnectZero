@@ -5,7 +5,7 @@ import neural_net
 import numpy as np
 from progress.bar import Bar
 
-import time, logging
+import time, logging, datetime, sys
 from copy import deepcopy
 from itertools import cycle
 from collections import defaultdict
@@ -38,18 +38,36 @@ class Dojo:
         logging.info(f"==Epoch started <{rounds} rounds of {n}==\n")
         
         for round in Bar('Epoch').iter(range(rounds)):
-            round_start = time.time()
-            logging.info(f" =Round {round} started= \n")
-            self.play_games(n)
-            self.train() # train the nnet
-            oldnnet = deepcopy(self.nnet)
-            win_pct = self.evaluate(self.nnet, oldnnet)
-            if win_pct >= 0.55:
-                self.nnet = oldnnet
-                logging.debug(f"Replacing neural net after {round+1} rounds")
-            self._save_checkpoint()
-            logging.info(f" =Round ended in {time.time()-round_start}s= \n")
-        
+            fail_count = 0
+            try:
+                round_start = time.time()
+                logging.info(f" =Round {round} started= \n")
+
+                self.play_games(n)
+                self.train() # train the nnet
+                
+                oldnnet = deepcopy(self.nnet)
+                win_pct = self.evaluate(self.nnet, oldnnet)
+                if win_pct >= 0.55:
+                    self.nnet = oldnnet
+                    logging.debug(f"Replacing neural net after {round+1} rounds")
+                
+                self._save_checkpoint()
+                self.tree.reset_tree()
+                logging.info(f" =Round ended in {time.time()-round_start}s= \n")
+                fail_count = 0
+
+            except Exception e:
+                fail_count += 1
+                self.nnet.save_checkpoint(f'nn_recovery_{datetime.datetime.now()}')
+                self.tree.save_checkpoint(f'tree_recovery_{datetime.datetime.now()}')
+                logging.warning(f"\n!!!Error in round {round}: {sys.exc_info()[0]}!!!\n")
+                if fail_count < 3:
+                    continue
+                else:
+                    logging.warning("Failed 3 times in a row. Cancelling...")
+                    return
+
         logging.info(f"==Epoch ended in {time.time()-start:.1f}s==\n")
 
 
@@ -128,12 +146,12 @@ class Dojo:
 
     def _save_checkpoint(self):
         logging.debug("saving checkpoint...")
-        self.tree.save_checkpoint()
+        #self.tree.save_checkpoint()
         self.nnet.save_checkpoint()
 
 
     def _load_checkpoints(self):
-        self.tree.load_checkpoint()
+        #self.tree.load_checkpoint()
         self.nnet.load_checkpoint()
 
 

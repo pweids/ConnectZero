@@ -62,6 +62,8 @@ class NeuralNet:
                 self.layers[-1].next = layer
             self.layers.append(layer)
 
+        logging.basicConfig(filename="nn.log", level=logging.DEBUG, filemode='w')
+
 
     def train(self, state, z, pi, verbose=False):
         """Train this neural network with the current state
@@ -69,15 +71,13 @@ class NeuralNet:
         probablity array
         """
         self.predict(state)
-        if verbose:
-            cost_start = self.cost_function(z, pi)
+        cost_start = self.cost_function(z, pi)
 
         self.backpropagate(z, pi)
         
-        if verbose:
-            self.predict(state)
-            cost_end = self.cost_function(z, pi)
-            print(f"Loss change: {cost_start:.2f} - {cost_end:.2f}")
+        self.predict(state)
+        cost_end = self.cost_function(z, pi)
+        logging.debug(f"Loss change: {cost_start:.2f} - {cost_end:.2f}")
 
 
     def predict(self, state):
