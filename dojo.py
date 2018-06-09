@@ -4,6 +4,7 @@ import neural_net, evaluator
 
 import numpy as np
 from progress.bar import Bar
+from progress.spinner import Spinner
 
 import time, logging, datetime
 from copy import deepcopy
@@ -28,7 +29,7 @@ class Dojo:
         self.batch_size = batch_size
 
 
-    def training_session(self, n=160, rounds=1000):
+    def training_session(self, n=50, rounds=100):
         """ The neural nets will play the number rounds with
         n games each. The nnets will be trained after every round.
         If the newly trained nnet wins greater than 55% of the time,
@@ -38,19 +39,20 @@ class Dojo:
         logging.info(f"==Training session started [{rounds} rounds of {n}]==\n")
         
         fail_count = 0
+        oldnnet = deepcopy(self.nnet)
         for rnd in Bar('Epoch').iter(range(rounds)):
             try:
                 round_start = time.time()
                 logging.info(f" =Round {rnd} started= ")
 
                 self.play_games(n)
-                oldnnet = deepcopy(self.nnet)
                 self.train() # train the nnet
                 
                 ev = evaluator.Evaluator(self.nnet, oldnnet)
                 win_pct = ev.evaluate()
                 if win_pct > 0.55:
                     self.nnet.save_checkpoint()
+                    oldnnet = deepcopy(self.nnet)
                     logging.debug(f"Saving trained neural net after {rnd+1} rounds")
                 
                 self.reset_session()
@@ -59,13 +61,13 @@ class Dojo:
             except KeyboardInterrupt:
                 print("Exiting...")
                 return
-            except exception as e:
+            except Exception as e:
                 fail_count += 1
                 print_time = datetime.datetime.now()
                 self.nnet.save_checkpoint(f'nn_recovery_{print_time}')
                 self.tree.save_checkpoint(f'tree_recovery_{print_time}')
                 self.reset_session()
-                self.nnet.load_checkpoint()
+                self.nnet = self.nnet.load_checkpoint()
                 logging.error(f"\n!!!Error in round {rnd}: {str(e)} [{print_time}]!!!\n")
                 if fail_count < 3:
                     continue
@@ -90,20 +92,23 @@ class Dojo:
             logging.info(f'{p} has won {winners[p]} times ({winners[p] / n})')
 
 
-    def simulate_game(self, max_turn_time=.5):
+    def simulate_game(self, max_turn_time=1):
         """Simulate a game played by the NeuralNet using the MCTS.
         The tree will stop searching for a turn after max_turn_time (seconds)
         """
         self.board.clear()
+        print("\n")
+        spinner = Spinner("Playing game...")
         while not self.board.game_over():
+            spinner.next()
             start_turn = time.time()
             while (time.time() - start_turn) < max_turn_time:
                 self.tree.search(self.board, self.nnet)
             
             pv = self.tree.prob_vec(self.board)
             choose = np.random.choice(len(pv), p=pv)
-            self.board.place_token(choose)
             self.training_examples.append([deepcopy(self.board), self.tree.pi_vec(self.board), None])
+            self.board.place_token(choose)
 
         self._add_to_results()
         return self.board.get_winner()
@@ -111,6 +116,7 @@ class Dojo:
  
     def train(self):
         # TODO: implement batching
+        logging.debug("initiating train...")
         for example in self.training_examples:
             self.nnet.train(*example)
 
@@ -147,9 +153,9 @@ class Dojo:
     def reset_session(self):
         self.tree.reset_tree()
         self.training_examples = []
+        self.board.clear()
 
 
 if __name__ == "__main__":
     d = Dojo()
-    d.play_games(1)
-    d.train()
+    d.training_session()

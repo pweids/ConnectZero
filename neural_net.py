@@ -2,6 +2,7 @@ import math
 import game
 
 import numpy as np
+import IPython
 import logging, pickle, os
 
 class RandomNeuralNet:
@@ -40,7 +41,7 @@ class Layer:
 
 class NeuralNet:
 
-    def __init__(self, layers=[42, 14, 12, 10, 8], eta=0.5):
+    def __init__(self, layers=[42, 14, 12, 10, 8], eta=0.1):
         """layers should be a list of neuron count. The first and last
         are the input and output layers, respectively. The others are
         hidden layers
@@ -78,6 +79,7 @@ class NeuralNet:
         self.predict(state)
         cost_end = self.cost_function(z, pi)
         delta_cost = cost_start - cost_end
+        print(f"Change: {cost_start:.2f} - {cost_end:.2f}: {delta_cost:.2f}")
 
 
     def predict(self, state):
@@ -135,7 +137,7 @@ class NeuralNet:
         delta = []
         for pi_i, P_i in zip(pi, P):
             #p_i / P_i
-            delta.append(pi_i*(1-P_i))
+            delta.append(P_i - pi_i)
         delta.append(2*(v-z))
         out_layer.delta = np.array(delta)
 
@@ -166,13 +168,22 @@ class NeuralNet:
 
 
     def ReLU_prime(self, x):
-        return (x > 0) * 1
+        if np.any(np.isnan(x)):
+            logging.error(f"Error in ReLU_prime. x is {x}")
+            return np.ones(len(x))/2
+        else:
+            return (x > 0) * 1
+        
 
 
     def softmax(self, p):
-        p = p / np.sum(p) # i found this helps when the values are really high
-        e_p = np.exp(p - np.max(p))
-        return e_p / e_p.sum(axis=0)
+        if np.any(np.isnan(p)) or np.sum(p) == 0:
+            logging.error(f"Error in softmax. p is {p}")
+            return np.ones(len(p))/len(p)
+        else:
+            p = p / np.sum(p) # i found this helps when the values are really high
+            e_p = np.exp(p - np.max(p))
+            return e_p / e_p.sum(axis=0)
 
 
     def save_checkpoint(self, file="dnn_checkpoint.bin"):

@@ -22,7 +22,7 @@ class Evaluator:
         logging.info("== Starting evaluation round ==")
         p1_wins = 0
         for i in range(num_games):
-            players = [(self.p1, MCTS(1)), (self.p2, MCTS(1))]
+            players = [(self.p1, MCTS(.5)), (self.p2, MCTS(.5))]
             board = GameBoard()
             
             shuffle(players)
