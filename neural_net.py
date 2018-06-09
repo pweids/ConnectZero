@@ -134,10 +134,13 @@ class NeuralNet:
         out_layer = self.layers[-1]
         # fill in the gradients for the output neurons
         P, v = self.get_results()
+        out_z = out_layer.z[:-1]
+        expZ = np.exp(out_z - np.max(out_z))
+        expZ_sum = np.sum(expZ)
         delta = []
-        for pi_i, P_i in zip(pi, P):
-            #p_i / P_i
-            delta.append(P_i - pi_i)
+        for pi_i, P_i, expZ_i in zip(pi, P, expZ):
+            ds_dz = (expZ_i * (expZ_sum - expZ_i)) / (expZ_sum**2)
+            delta.append((pi_i / P_i) * ds_dz)
         delta.append(2*(v-z))
         out_layer.delta = np.array(delta)
 

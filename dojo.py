@@ -6,7 +6,7 @@ import numpy as np
 from progress.bar import Bar
 from progress.spinner import Spinner
 
-import time, logging, datetime
+import time, logging, datetime, warnings
 from copy import deepcopy
 from itertools import cycle
 from collections import defaultdict
@@ -157,5 +157,7 @@ class Dojo:
 
 
 if __name__ == "__main__":
-    d = Dojo()
-    d.training_session()
+    np.seterr(all='warn')
+    warnings.filterwarnings('error')
+    d = Dojo(nnet=neural_net.NeuralNet.load_checkpoint())
+    d.training_session(10,10)
