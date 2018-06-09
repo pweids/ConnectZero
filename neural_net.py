@@ -78,7 +78,6 @@ class NeuralNet:
         self.predict(state)
         cost_end = self.cost_function(z, pi)
         delta_cost = cost_start - cost_end
-        out = f"Loss change: {cost_start:.2f} - {cost_end:.2f} = {delta_cost:.2f}"
 
 
     def predict(self, state):
