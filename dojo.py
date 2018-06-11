@@ -29,24 +29,25 @@ class Dojo:
         self.batch_size = batch_size
 
 
-    def training_session(self, n=50, rounds=100):
+    def training_session(self, n=80, rounds=1000, turn_time=3):
         """ The neural nets will play the number rounds with
         n games each. The nnets will be trained after every round.
         If the newly trained nnet wins greater than 55% of the time,
         it becomes our new nnet
         """
+        self.reset_session()
         start = time.time()
         logging.info(f"==Training session started [{rounds} rounds of {n}]==\n")
         
         fail_count = 0
         oldnnet = deepcopy(self.nnet)
+
         for rnd in Bar('Epoch').iter(range(rounds)):
             try:
                 round_start = time.time()
                 logging.info(f" =Round {rnd} started= ")
 
-                self.play_games(n)
-                self.train() # train the nnet
+                self.play_games(n, turn_time)
                 
                 ev = evaluator.Evaluator(self.nnet, oldnnet)
                 win_pct = ev.evaluate()
@@ -55,9 +56,10 @@ class Dojo:
                     oldnnet = deepcopy(self.nnet)
                     logging.debug(f"Saving trained neural net after {rnd+1} rounds")
                 
-                self.reset_session()
                 logging.info(f" =Round ended in {time.time()-round_start:.2f}s= \n")
                 fail_count = 0
+                self.nnet.save_checkpoint("training_back.bin")
+                self.tree.reset_tree()
             except KeyboardInterrupt:
                 print("Exiting...")
                 return
@@ -67,7 +69,7 @@ class Dojo:
                 self.nnet.save_checkpoint(f'nn_recovery_{print_time}')
                 self.tree.save_checkpoint(f'tree_recovery_{print_time}')
                 self.reset_session()
-                self.nnet = self.nnet.load_checkpoint()
+                self.nnet = oldnnet
                 logging.error(f"\n!!!Error in round {rnd}: {str(e)} [{print_time}]!!!\n")
                 if fail_count < 3:
                     continue
@@ -78,16 +80,18 @@ class Dojo:
         logging.info(f"==Training session ended in {time.time()-start:.1f}s==\n")
 
 
-    def play_games(self, n=10):
+    def play_games(self, n=10, turn_time=1):
         """ This function will n games and store
         the results into the batch variable for training
         """
         winners = defaultdict(int)
         for i in range(n):# Bar('Game', suffix="%(index)d/%(max)d - %(elapsed)ds [%(eta)ds remain]").iter(range(n)):
-            winner = self.simulate_game()
+            winner = self.simulate_game(turn_time)
             winners[winner] += 1
             logging.debug(f"End of game {i}. Winner: {winner}")
-
+            
+            self.train()
+            self.reset_session()
         for p in winners:
             logging.info(f'{p} has won {winners[p]} times ({winners[p] / n})')
 
@@ -112,7 +116,7 @@ class Dojo:
 
         self._add_to_results()
         return self.board.get_winner()
- 
+       
  
     def train(self):
         # TODO: implement batching
@@ -151,13 +155,13 @@ class Dojo:
 
 
     def reset_session(self):
-        self.tree.reset_tree()
         self.training_examples = []
+        self.tree.reset_tree()
         self.board.clear()
 
 
 if __name__ == "__main__":
     np.seterr(all='warn')
     warnings.filterwarnings('error')
-    d = Dojo(nnet=neural_net.NeuralNet.load_checkpoint())
-    d.training_session(10,10)
+    d = Dojo()
+    d.training_session(turn_time=.5)

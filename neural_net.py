@@ -29,7 +29,7 @@ class Layer:
         """
         self.size = size
         self.z = z or np.zeros(size)
-        self.b = b or np.random.randn(size)
+        self.b = b or np.random.randn(size) * 2 + 4
         self.a = a or np.zeros(size)
         self.delta = delta or np.zeros(size)
         self.W = W
@@ -41,7 +41,7 @@ class Layer:
 
 class NeuralNet:
 
-    def __init__(self, layers=[42, 14, 12, 10, 8], eta=0.1):
+    def __init__(self, layers=[42, 30, 30, 16, 8], eta=0.5):
         """layers should be a list of neuron count. The first and last
         are the input and output layers, respectively. The others are
         hidden layers
@@ -57,7 +57,7 @@ class NeuralNet:
             curr_size = layers[i+1]
             prev_size = layers[i]
             # shape of Weights is current layer x prev layer
-            W = np.random.randn(curr_size, prev_size)
+            W = np.random.randn(curr_size, prev_size) * 2 + 4
             layer = Layer(curr_size, W)
             if i > 0:
                 self.layers[-1].next = layer
@@ -79,7 +79,7 @@ class NeuralNet:
         self.predict(state)
         cost_end = self.cost_function(z, pi)
         delta_cost = cost_start - cost_end
-        print(f"Change: {cost_start:.2f} - {cost_end:.2f}: {delta_cost:.2f}")
+        logging.debug(f"Change: {cost_start:.2f} - {cost_end:.2f}: {delta_cost:.2f}")
 
 
     def predict(self, state):
@@ -101,12 +101,12 @@ class NeuralNet:
 
 
     def feedforward(self):
-        a = self.inputs
+        prev_a = self.inputs
         for layer in self.layers:
-            layer.z = layer.W.dot(a) + layer.b
+            layer.z = layer.W.dot(prev_a) + layer.b
             if layer is not self.layers[-1]: # don't apply relu to last layer
                 layer.a = self.ReLU(layer.z)
-                a = layer.a
+                prev_a = layer.a
             else: # last layer is a prob distribution + a value in [-1, 1]
                 layer.a = np.append(self.softmax(layer.z[:-1]), np.tanh(layer.z[-1]))
 
@@ -122,7 +122,7 @@ class NeuralNet:
         π = visited probabilities from the MCTS
         """
         P, v = self.get_results()
-        l = (z - v)**2 - pi.dot(np.log(P))
+        l = (v-z)**2 - pi.dot(np.log(P))
         return l
 
 
@@ -134,13 +134,10 @@ class NeuralNet:
         out_layer = self.layers[-1]
         # fill in the gradients for the output neurons
         P, v = self.get_results()
-        out_z = out_layer.z[:-1]
-        expZ = np.exp(out_z - np.max(out_z))
-        expZ_sum = np.sum(expZ)
+        
         delta = []
-        for pi_i, P_i, expZ_i in zip(pi, P, expZ):
-            ds_dz = (expZ_i * (expZ_sum - expZ_i)) / (expZ_sum**2)
-            delta.append((pi_i / P_i) * ds_dz)
+        for pi_i, P_i in zip(pi, P):
+            delta.append(P_i - pi_i)
         delta.append(2*(v-z))
         out_layer.delta = np.array(delta)
 

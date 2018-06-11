@@ -43,9 +43,9 @@ class Evaluator:
                 
             if player[0] is self.p1:
                 p1_wins += 1
-                logging.info(f"player 1 wins game {i} ({p1_wins} total wins)")
+                logging.info(f"player 1 wins game {i+1} ({p1_wins} total wins)")
             else:
-                logging.info(f"player 2 wins game {i} ({i-p1_wins+1} total wins)")
+                logging.info(f"player 2 wins game {i+1} ({i-p1_wins+1} total wins)")
             logging.debug(f"game {i} took {time.time()-game_start:.1f}s, {board.total_moves} moves\n{board}")
             
             if p1_wins/num_games >= 0.55: # end early if p1 has majority

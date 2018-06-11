@@ -25,7 +25,7 @@ class MCTS:
         # Terminal condition
         if state.game_over():
             self.Terminals.add(state)
-            return -1 # the "current player" will always be the loser, thus -1
+            return 1 # the "current player" will always be the loser, thus -(-1) = 1
 
         # Not explored condition
         # Use the neural net to predict P(s,*) and V(s)
@@ -48,7 +48,7 @@ class MCTS:
         
         # 4. Update the edge values to backprop
         self.Nsa[chosen_edge] += 1
-        self.Wsa[chosen_edge] -= v
+        self.Wsa[chosen_edge] += v
         self.Qsa[chosen_edge] = self.Wsa[chosen_edge] / self.Nsa[chosen_edge]
         
         # 5. Return -v because players switch
@@ -88,16 +88,16 @@ class MCTS:
         return prob
 
 
-    def pi_vec(self, state):
-        temp = 1 / (state.total_moves + 1) # the temperature gets lower as we get further in the game
+    def pi_vec(self, state): # the temperature gets lower as we get further in the game
         pi = []
         moves = state.get_legal_moves()
-        total_visits = np.sum([self.Nsa[(state, move)] for move in moves]) ** (1./temp)
+        total_visits = np.sum([self.Nsa[(state, move)] for move in moves])
         if total_visits == 0:
+            logging.debug("pi_vec total visits was 0")
             return np.ones(state.cols) / state.cols # give them equal probabilities
         for action in range(state.cols):
             edge = (state, action)
-            pi.append(self.Nsa[edge]**(1./temp) / total_visits)
+            pi.append(self.Nsa[edge] / total_visits)
         return np.array(pi)
 
     
