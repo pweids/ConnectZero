@@ -90,16 +90,6 @@ class NeuralNet:
         return self.get_results()
 
 
-    def get_results(self):
-        P = self.layers[-1].a[:-1]
-        v = self.layers[-1].a[-1]
-        return P, v
-
-    
-    def unpack_inputs(self, state):
-        self.inputs = state.board.flatten()
-
-
     def feedforward(self):
         prev_a = self.inputs
         for layer in self.layers:
@@ -115,15 +105,6 @@ class NeuralNet:
         self.create_gradients(z, pi)
         self.update_weights()
         self.update_biases()
-
-
-    def cost_function(self, z, pi):
-        """Calculate the cost for actual value z ∈ {-1,0,1} and
-        π = visited probabilities from the MCTS
-        """
-        P, v = self.get_results()
-        l = (z-v)**2 - pi.dot(np.log(P))
-        return l
 
 
     def create_gradients(self, z, pi):
@@ -173,7 +154,6 @@ class NeuralNet:
             return np.ones(len(x))/2
         else:
             return (x > 0) * 1
-        
 
 
     def softmax(self, p):
@@ -184,6 +164,25 @@ class NeuralNet:
             p = p / np.sum(p) # i found this helps when the values are really high
             e_p = np.exp(p - np.max(p))
             return e_p / e_p.sum(axis=0)
+
+
+    def cost_function(self, z, pi):
+        """Calculate the cost for actual value z ∈ {-1,0,1} and
+        π = visited probabilities from the MCTS
+        """
+        P, v = self.get_results()
+        l = (z-v)**2 - pi.dot(np.log(P))
+        return l
+
+
+    def get_results(self):
+        P = self.layers[-1].a[:-1]
+        v = self.layers[-1].a[-1]
+        return P, v
+
+
+    def unpack_inputs(self, state):
+        self.inputs = state.board.flatten()
 
 
     def save_checkpoint(self, file="dnn_checkpoint.bin"):
