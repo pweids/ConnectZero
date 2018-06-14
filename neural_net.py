@@ -122,7 +122,7 @@ class NeuralNet:
         π = visited probabilities from the MCTS
         """
         P, v = self.get_results()
-        l = (v-z)**2 - pi.dot(np.log(P))
+        l = (z-v)**2 - pi.dot(np.log(P))
         return l
 
 

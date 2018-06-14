@@ -88,7 +88,7 @@ class MCTS:
         return prob
 
 
-    def pi_vec(self, state): # the temperature gets lower as we get further in the game
+    def pi_vec(self, state):
         pi = []
         moves = state.get_legal_moves()
         total_visits = np.sum([self.Nsa[(state, move)] for move in moves])

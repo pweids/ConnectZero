@@ -58,7 +58,6 @@ class Dojo:
                 
                 logging.info(f" =Round ended in {time.time()-round_start:.2f}s= \n")
                 fail_count = 0
-                self.nnet.save_checkpoint("training_back.bin")
                 self.tree.reset_tree()
             except KeyboardInterrupt:
                 print("Exiting...")
